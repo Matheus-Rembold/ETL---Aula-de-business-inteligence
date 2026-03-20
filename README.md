@@ -48,17 +48,22 @@ Esses campos foram escolhidos por permitirem compreender melhor o comportamento 
 
 Com os dados selecionados e organizados, a análise busca responder algumas perguntas de negócio que ajudam a entender melhor os padrões de gastos presentes nas faturas. Entre as principais questões que o trabalho pretende esclarecer estão:
 
-    1 Quais são as categorias que apresentam os maiores gastos ao longo do período analisado?
+- Gasto total por titular no período e por mês.
 
-    2 As datas das compras influenciam no aumento ou diminuição dos gastos em determinadas categorias?
+- Gasto por categoria (top 10 categorias em valor).
 
-    3 Os gastos da fatura estão mais concentrados no começo, no meio ou no final do mês?
+- Evolução mensal do total gasto (série temporal).
 
-    4 Existe diferença no volume de gastos entre os diferentes cartões (identificados pelo final do cartão)?
+- Comparativo entre titulares (valor médio por transação, quantidade de transações).
 
-    5 Quais categorias apresentam maior frequência de compras?
+- Principais estabelecimentos por valor (top N).
 
-    6 Há presença significativa de compras parceladas e em quais categorias elas ocorrem com maior frequência?
+- Comportamento de parcelamento: quantidade de compras à vista vs parceladas.
+
+- Dia da semana com mais transações ou maior volume.
+
+- Estornos e créditos: total e impacto por titular/categoria.
+
 
 
 ## Projeto para o data warehouse

@@ -143,7 +143,7 @@ fato_transacao.columns = [
 
 #Criar banco de dados
 
-engine = create_engine('postgresql://usuario:senha@localhost:5432/dw')
+engine = create_engine('postgresql://postgres:masterkey@localhost:5432/dw')
 
 dim_data.to_sql('dim_data', engine, index=False, if_exists='replace')
 dim_titular.to_sql('dim_titular', engine, index=False, if_exists='replace')
