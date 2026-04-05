@@ -74,6 +74,7 @@ dados = dados[
     .str.strip()
     .str.contains('Inclusao de Pagamento', case=False, na=False)
 ].reset_index(drop=True)
+
 print(f"[ETL] {len(dados)} linhas após remoção de pagamentos de fatura.")
 
 
@@ -136,6 +137,10 @@ fato_transacao.columns = [
     'valor_brl', 'valor_usd', 'cotacao',
     'parcela_texto', 'num_parcela', 'total_parcelas'
 ]
+
+fato_transacao['parcela_texto'] = fato_transacao['total_parcelas'].apply(
+    lambda x: 'À vista' if x == 1 else 'Parcelado'
+)
 
 
 # 5. LOAD
