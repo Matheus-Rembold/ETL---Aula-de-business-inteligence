@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
-"""
-ETL - Data Warehouse de Faturas de Cartão de Crédito
-Carrega CSVs da pasta data/, transforma e persiste no PostgreSQL.
-"""
 
 import pandas as pd
 import glob
 from sqlalchemy import create_engine
 
-# ---------------------------------------------------------------------------
+
 # 1. EXTRACT
-# ---------------------------------------------------------------------------
+
 
 arquivos = glob.glob("data/*.csv")
 
@@ -24,17 +20,17 @@ dados = pd.concat(
 
 print(f"[ETL] {len(arquivos)} arquivo(s) carregado(s) — {len(dados)} linhas brutas.")
 
-# ---------------------------------------------------------------------------
-# 2. TRANSFORM
-# ---------------------------------------------------------------------------
 
-# --- 2.1 Datas ---
+# 2. TRANSFORM
+
+
+#  Datas 
 dados['Data de Compra'] = pd.to_datetime(dados['Data de Compra'], format='%d/%m/%Y')
 dados['ano']       = dados['Data de Compra'].dt.year
 dados['mes']       = dados['Data de Compra'].dt.month
 dados['trimestre'] = dados['Data de Compra'].dt.quarter
 
-# Mapeamento manual para evitar dependência de locale do SO
+
 _dias = {
     'Monday': 'Segunda-feira', 'Tuesday': 'Terça-feira',
     'Wednesday': 'Quarta-feira', 'Thursday': 'Quinta-feira',
@@ -42,8 +38,8 @@ _dias = {
 }
 dados['dia_semana'] = dados['Data de Compra'].dt.day_name().map(_dias)
 
-# --- 2.2 Campos numéricos ---
-# Garante que vírgulas decimais (padrão BR) sejam convertidas antes do cast
+#Campos numéricos
+
 for col in ['Valor (em US$)', 'Cotação (em R$)', 'Valor (em R$)']:
     dados[col] = (
         dados[col]
@@ -55,7 +51,7 @@ for col in ['Valor (em US$)', 'Cotação (em R$)', 'Valor (em R$)']:
 
 dados['Final do Cartão'] = pd.to_numeric(dados['Final do Cartão'], errors='coerce').astype('Int64')
 
-# --- 2.3 Parcelas ---
+# Parcelas
 dados['num_parcela']    = pd.to_numeric(dados['Parcela'].str.split('/').str[0], errors='coerce')
 dados['total_parcelas'] = pd.to_numeric(dados['Parcela'].str.split('/').str[1], errors='coerce')
 
@@ -66,21 +62,23 @@ dados.loc[mask_unica, ['num_parcela', 'total_parcelas']] = 1
 dados['num_parcela']    = dados['num_parcela'].fillna(1).astype(int)
 dados['total_parcelas'] = dados['total_parcelas'].fillna(1).astype(int)
 
-# --- 2.4 Categoria ---
-# Normaliza o traço "-" e variações para "Não categorizado"
+# Categoria 
+
 dados['Categoria'] = dados['Categoria'].astype(str).str.strip()
 dados.loc[dados['Categoria'].isin(['-', '', 'nan']), 'Categoria'] = 'Não categorizado'
 
 # --- 2.5 Remoção de pagamentos de fatura ---
 dados = dados[
-    ~dados['Descrição'].str.contains('Inclusao de Pagamento', case=False, na=False)
+    ~dados['Descrição']
+    .str.replace(r'\s+', ' ', regex=True)
+    .str.strip()
+    .str.contains('Inclusao de Pagamento', case=False, na=False)
 ].reset_index(drop=True)
-
 print(f"[ETL] {len(dados)} linhas após remoção de pagamentos de fatura.")
 
-# ---------------------------------------------------------------------------
+
 # 3. DIMENSÕES
-# ---------------------------------------------------------------------------
+
 
 # DIM_DATA
 dim_data = (
@@ -116,9 +114,8 @@ dim_estabelecimento = (
 )
 dim_estabelecimento['id_estabelecimento'] = dim_estabelecimento.index + 1
 
-# ---------------------------------------------------------------------------
+
 # 4. FATO
-# ---------------------------------------------------------------------------
 
 fato = (
     dados
@@ -140,9 +137,8 @@ fato_transacao.columns = [
     'parcela_texto', 'num_parcela', 'total_parcelas'
 ]
 
-# ---------------------------------------------------------------------------
+
 # 5. LOAD
-# ---------------------------------------------------------------------------
 
 engine = create_engine('postgresql+psycopg2://postgres:masterkey@localhost:5432/dw')
 
